@@ -32,17 +32,12 @@ function exportEventsCSV(
 ) {
   let filtered = events;
 
-  if (fromDate) {
-    filtered = filtered.filter(e => e.date >= fromDate);
-  }
-  if (toDate) {
-    filtered = filtered.filter(e => e.date <= toDate);
-  }
-  if (serviceFilter !== "All") {
+  if (fromDate) filtered = filtered.filter(e => e.date >= fromDate);
+  if (toDate) filtered = filtered.filter(e => e.date <= toDate);
+  if (serviceFilter !== "All")
     filtered = filtered.filter(e => e.serviceType === serviceFilter);
-  }
 
-  if (filtered.length === 0) {
+  if (!filtered.length) {
     toast.error("No data to export");
     return;
   }
@@ -54,14 +49,7 @@ function exportEventsCSV(
     if (e.serviceType === "Bridal") bridalTotal += e.amount;
     if (e.serviceType === "Mehandi") mehandiTotal += e.amount;
 
-    return [
-      e.date,
-      e.clientName,
-      e.eventName,
-      e.serviceType,
-      e.amount,
-      e.notes || ""
-    ];
+    return [e.date, e.clientName, e.eventName, e.serviceType, e.amount, e.notes || ""];
   });
 
   rows.push([]);
@@ -73,9 +61,7 @@ function exportEventsCSV(
   const csv = [
     ["Date", "Client", "Event", "Service Type", "Amount", "Notes"],
     ...rows,
-  ]
-    .map(r => r.join(","))
-    .join("\n");
+  ].map(r => r.join(",")).join("\n");
 
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
@@ -91,16 +77,10 @@ function exportEventsCSV(
 /* ================= COMPONENT ================= */
 
 export default function Events() {
-  const {
-    events,
-    addEvent,
-    updateEvent,
-    deleteEvent,
-    bridalSummary,
-    mehandiSummary,
-  } = useData();
+  const { events, addEvent, updateEvent, deleteEvent, bridalSummary, mehandiSummary } =
+    useData();
 
-  /* ---------- ADD FORM ---------- */
+  /* ---------- ADD ---------- */
   const [date, setDate] = useState("");
   const [clientName, setClientName] = useState("");
   const [eventName, setEventName] = useState("");
@@ -109,26 +89,17 @@ export default function Events() {
   const [notes, setNotes] = useState("");
 
   /* ---------- EDIT ---------- */
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<BridalEvent | null>(null);
-  const [editDate, setEditDate] = useState("");
-  const [editClientName, setEditClientName] = useState("");
-  const [editEventName, setEditEventName] = useState("");
-  const [editServiceType, setEditServiceType] =
-    useState<ServiceType>("Bridal");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<BridalEvent | null>(null);
   const [editAmount, setEditAmount] = useState("");
-  const [editNotes, setEditNotes] = useState("");
 
-  /* ---------- EXPORT FILTERS ---------- */
+  /* ---------- EXPORT ---------- */
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [exportType, setExportType] =
-    useState<ServiceType | "All">("All");
+  const [exportType, setExportType] = useState<ServiceType | "All">("All");
 
-  /* ---------- ADD EVENT ---------- */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!date || !clientName || !eventName || !amount) {
       toast.error("Fill all required fields");
       return;
@@ -150,31 +121,19 @@ export default function Events() {
     setNotes("");
   };
 
-  /* ---------- EDIT ---------- */
-  const handleEdit = (event: BridalEvent) => {
-    setEditingEvent(event);
-    setEditDate(event.date);
-    setEditClientName(event.clientName);
-    setEditEventName(event.eventName);
-    setEditServiceType(event.serviceType);
-    setEditAmount(event.amount.toString());
-    setEditNotes(event.notes || "");
-    setEditDialogOpen(true);
+  const handleEdit = (e: BridalEvent) => {
+    setEditing(e);
+    setEditAmount(e.amount.toString());
+    setEditOpen(true);
   };
 
   const handleEditSubmit = () => {
-    if (!editingEvent) return;
-
-    updateEvent(editingEvent.id, {
-      date: editDate,
-      clientName: editClientName,
-      eventName: editEventName,
-      serviceType: editServiceType,
+    if (!editing) return;
+    updateEvent(editing.id, {
+      ...editing,
       amount: Number(editAmount),
-      notes: editNotes,
     });
-
-    setEditDialogOpen(false);
+    setEditOpen(false);
   };
 
   return (
@@ -182,9 +141,9 @@ export default function Events() {
       <div className="space-y-6">
 
         {/* HEADER */}
-        <div className="flex justify-between">
-          <h1 className="text-3xl font-bold">Events</h1>
-          <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold">Events</h1>
+          <div className="text-sm flex gap-4">
             <span>Bridal: {formatCurrency(bridalSummary.income)}</span>
             <span>Mehandi: {formatCurrency(mehandiSummary.income)}</span>
           </div>
@@ -194,17 +153,13 @@ export default function Events() {
         <Card>
           <CardHeader>
             <CardTitle className="flex gap-2 items-center">
-              <Download /> Export Events (CSV)
+              <Download /> Export Events
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-4 gap-4">
-            <Input type="date" value={fromDate}
-              onChange={e => setFromDate(e.target.value)} />
-            <Input type="date" value={toDate}
-              onChange={e => setToDate(e.target.value)} />
-
-            <Select value={exportType}
-              onValueChange={v => setExportType(v as any)}>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
+            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
+            <Select value={exportType} onValueChange={v => setExportType(v as any)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All</SelectItem>
@@ -212,65 +167,52 @@ export default function Events() {
                 <SelectItem value="Mehandi">Mehandi</SelectItem>
               </SelectContent>
             </Select>
-
-            <Button
-              onClick={() =>
-                exportEventsCSV(events, fromDate, toDate, exportType)
-              }
-            >
+            <Button onClick={() => exportEventsCSV(events, fromDate, toDate, exportType)}>
               Export CSV
             </Button>
           </CardContent>
         </Card>
 
-        {/* ADD FORM */}
+        {/* ADD */}
         <Card>
           <CardHeader><CardTitle>Add Event</CardTitle></CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
-              <Input placeholder="Client" value={clientName}
-                onChange={e => setClientName(e.target.value)} />
-              <Input type="date" value={date}
-                onChange={e => setDate(e.target.value)} />
-              <Input placeholder="Event" value={eventName}
-                onChange={e => setEventName(e.target.value)} />
-              <Input type="number" placeholder="Amount" value={amount}
-                onChange={e => setAmount(e.target.value)} />
-
-              <Select value={serviceType}
-                onValueChange={v => setServiceType(v as ServiceType)}>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Input placeholder="Client" value={clientName} onChange={e => setClientName(e.target.value)} />
+              <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+              <Input placeholder="Event" value={eventName} onChange={e => setEventName(e.target.value)} />
+              <Input type="number" placeholder="Amount" value={amount} onChange={e => setAmount(e.target.value)} />
+              <Select value={serviceType} onValueChange={v => setServiceType(v as ServiceType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Bridal">Bridal</SelectItem>
                   <SelectItem value="Mehandi">Mehandi</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Textarea placeholder="Notes"
-                value={notes}
-                onChange={e => setNotes(e.target.value)} />
-              <Button type="submit">Add</Button>
+              <Textarea placeholder="Notes" value={notes} onChange={e => setNotes(e.target.value)} />
+              <Button type="submit" className="sm:col-span-2 lg:col-span-3">Add Event</Button>
             </form>
           </CardContent>
         </Card>
 
         {/* LIST */}
         <Card>
-          <CardContent>
+          <CardContent className="space-y-3">
             {events.map(e => (
-              <div key={e.id} className="flex justify-between py-2 border-b">
-                <span>{formatDate(e.date)}</span>
-                <span>{e.clientName}</span>
-                <span>{e.eventName}</span>
-                <span>{e.serviceType}</span>
-                <span>{formatCurrency(e.amount)}</span>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => handleEdit(e)}>
-                    <Pencil size={16} />
-                  </Button>
-                  <Button size="sm" onClick={() => deleteEvent(e.id)}>
-                    <Trash2 size={16} />
-                  </Button>
+              <div
+                key={e.id}
+                className="border rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between gap-3"
+              >
+                <div>
+                  <p className="font-medium">{e.clientName} – {e.eventName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(e.date)} • {e.serviceType}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold">{formatCurrency(e.amount)}</span>
+                  <Button size="sm" onClick={() => handleEdit(e)}><Pencil size={16} /></Button>
+                  <Button size="sm" onClick={() => deleteEvent(e.id)}><Trash2 size={16} /></Button>
                 </div>
               </div>
             ))}
@@ -278,15 +220,14 @@ export default function Events() {
         </Card>
 
         {/* EDIT */}
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogContent>
-            <DialogHeader><DialogTitle>Edit Event</DialogTitle></DialogHeader>
-            <Input value={editClientName}
-              onChange={e => setEditClientName(e.target.value)} />
-            <Input value={editEventName}
-              onChange={e => setEditEventName(e.target.value)} />
-            <Input type="number" value={editAmount}
-              onChange={e => setEditAmount(e.target.value)} />
+            <DialogHeader><DialogTitle>Edit Amount</DialogTitle></DialogHeader>
+            <Input
+              type="number"
+              value={editAmount}
+              onChange={e => setEditAmount(e.target.value)}
+            />
             <Button onClick={handleEditSubmit}>Save</Button>
           </DialogContent>
         </Dialog>

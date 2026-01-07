@@ -34,11 +34,10 @@ function exportExpensesCSV(
 
   if (fromDate) filtered = filtered.filter(e => e.date >= fromDate);
   if (toDate) filtered = filtered.filter(e => e.date <= toDate);
-  if (serviceFilter !== "All") {
+  if (serviceFilter !== "All")
     filtered = filtered.filter(e => e.serviceType === serviceFilter);
-  }
 
-  if (filtered.length === 0) {
+  if (!filtered.length) {
     toast.error("No data to export");
     return;
   }
@@ -56,7 +55,7 @@ function exportExpensesCSV(
       e.serviceType,
       e.amount,
       e.description || "",
-      e.notes || ""
+      e.notes || "",
     ];
   });
 
@@ -69,9 +68,7 @@ function exportExpensesCSV(
   const csv = [
     ["Date", "Expense", "Service Type", "Amount", "Description", "Notes"],
     ...rows,
-  ]
-    .map(r => r.join(","))
-    .join("\n");
+  ].map(r => r.join(",")).join("\n");
 
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
@@ -96,7 +93,7 @@ export default function Expenses() {
     mehandiSummary,
   } = useData();
 
-  /* ---------- ADD FORM ---------- */
+  /* ---------- ADD ---------- */
   const [date, setDate] = useState("");
   const [expenseName, setExpenseName] = useState("");
   const [description, setDescription] = useState("");
@@ -105,18 +102,16 @@ export default function Expenses() {
   const [notes, setNotes] = useState("");
 
   /* ---------- EDIT ---------- */
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [editExpenseName, setEditExpenseName] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<Expense | null>(null);
   const [editAmount, setEditAmount] = useState("");
+  const [editName, setEditName] = useState("");
 
-  /* ---------- EXPORT FILTERS ---------- */
+  /* ---------- EXPORT ---------- */
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [exportType, setExportType] =
-    useState<ServiceType | "All">("All");
+  const [exportType, setExportType] = useState<ServiceType | "All">("All");
 
-  /* ---------- ADD ---------- */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -141,27 +136,23 @@ export default function Expenses() {
     setNotes("");
   };
 
-  /* ---------- EDIT ---------- */
-  const handleEdit = (expense: Expense) => {
-    setEditingExpense(expense);
-    setEditExpenseName(expense.expenseName);
-    setEditAmount(expense.amount.toString());
-    setEditDialogOpen(true);
+  const handleEdit = (e: Expense) => {
+    setEditing(e);
+    setEditName(e.expenseName);
+    setEditAmount(e.amount.toString());
+    setEditOpen(true);
   };
 
   const handleEditSubmit = () => {
-    if (!editingExpense) return;
+    if (!editing) return;
 
-    updateExpense(editingExpense.id, {
-      date: editingExpense.date,
-      expenseName: editExpenseName,
-      description: editingExpense.description,
-      serviceType: editingExpense.serviceType,
+    updateExpense(editing.id, {
+      ...editing,
+      expenseName: editName,
       amount: Number(editAmount),
-      notes: editingExpense.notes,
     });
 
-    setEditDialogOpen(false);
+    setEditOpen(false);
   };
 
   return (
@@ -169,9 +160,9 @@ export default function Expenses() {
       <div className="space-y-6">
 
         {/* HEADER */}
-        <div className="flex justify-between">
-          <h1 className="text-3xl font-bold">Expenses</h1>
-          <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold">Expenses</h1>
+          <div className="text-sm flex gap-4">
             <span>Bridal: {formatCurrency(bridalSummary.expenses)}</span>
             <span>Mehandi: {formatCurrency(mehandiSummary.expenses)}</span>
           </div>
@@ -181,17 +172,13 @@ export default function Expenses() {
         <Card>
           <CardHeader>
             <CardTitle className="flex gap-2 items-center">
-              <Download /> Export Expenses (CSV)
+              <Download /> Export Expenses
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-4 gap-4">
-            <Input type="date" value={fromDate}
-              onChange={e => setFromDate(e.target.value)} />
-            <Input type="date" value={toDate}
-              onChange={e => setToDate(e.target.value)} />
-
-            <Select value={exportType}
-              onValueChange={v => setExportType(v as any)}>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
+            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
+            <Select value={exportType} onValueChange={v => setExportType(v as any)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All</SelectItem>
@@ -199,67 +186,54 @@ export default function Expenses() {
                 <SelectItem value="Mehandi">Mehandi</SelectItem>
               </SelectContent>
             </Select>
-
-            <Button
-              onClick={() =>
-                exportExpensesCSV(expenses, fromDate, toDate, exportType)
-              }
-            >
+            <Button onClick={() => exportExpensesCSV(expenses, fromDate, toDate, exportType)}>
               Export CSV
             </Button>
           </CardContent>
         </Card>
 
-        {/* ADD FORM */}
+        {/* ADD */}
         <Card>
           <CardHeader><CardTitle>Add Expense</CardTitle></CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
-              <Input placeholder="Expense Name"
-                value={expenseName}
-                onChange={e => setExpenseName(e.target.value)} />
-
-              <Input type="date" value={date}
-                onChange={e => setDate(e.target.value)} />
-
-              <Input type="number" placeholder="Amount"
-                value={amount}
-                onChange={e => setAmount(e.target.value)} />
-
-              <Select value={serviceType}
-                onValueChange={v => setServiceType(v as ServiceType)}>
+            <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" onSubmit={handleSubmit}>
+              <Input placeholder="Expense Name" value={expenseName} onChange={e => setExpenseName(e.target.value)} />
+              <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+              <Input type="number" placeholder="Amount" value={amount} onChange={e => setAmount(e.target.value)} />
+              <Select value={serviceType} onValueChange={v => setServiceType(v as ServiceType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Bridal">Bridal</SelectItem>
                   <SelectItem value="Mehandi">Mehandi</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Textarea placeholder="Description"
-                value={description}
-                onChange={e => setDescription(e.target.value)} />
-
-              <Textarea placeholder="Notes"
-                value={notes}
-                onChange={e => setNotes(e.target.value)} />
-
-              <Button type="submit">Add</Button>
+              <Textarea placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} />
+              <Textarea placeholder="Notes" value={notes} onChange={e => setNotes(e.target.value)} />
+              <Button type="submit" className="sm:col-span-2 lg:col-span-3">
+                Add Expense
+              </Button>
             </form>
           </CardContent>
         </Card>
 
         {/* LIST */}
         <Card>
-          <CardContent>
+          <CardContent className="space-y-3">
             {expenses.map(e => (
-              <div key={e.id} className="flex justify-between py-2 border-b">
-                <span>{formatDate(e.date)}</span>
-                <span>{e.expenseName}</span>
-                <span>{e.serviceType}</span>
-                <span className="text-red-600">
-                  -{formatCurrency(e.amount)}
-                </span>
-                <div className="flex gap-2">
+              <div
+                key={e.id}
+                className="border rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between gap-3"
+              >
+                <div>
+                  <p className="font-medium">{e.expenseName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(e.date)} • {e.serviceType}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold text-destructive">
+                    -{formatCurrency(e.amount)}
+                  </span>
                   <Button size="sm" onClick={() => handleEdit(e)}>
                     <Pencil size={16} />
                   </Button>
@@ -273,15 +247,12 @@ export default function Expenses() {
         </Card>
 
         {/* EDIT */}
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Expense</DialogTitle>
             </DialogHeader>
-            <Input
-              value={editExpenseName}
-              onChange={e => setEditExpenseName(e.target.value)}
-            />
+            <Input value={editName} onChange={e => setEditName(e.target.value)} />
             <Input
               type="number"
               value={editAmount}

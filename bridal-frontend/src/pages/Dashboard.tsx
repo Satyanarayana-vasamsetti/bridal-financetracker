@@ -35,11 +35,7 @@ export default function Dashboard() {
   const recentExpenses = expenses.slice(0, 5);
 
   const getServiceIcon = (type: ServiceType) =>
-    type === "Bridal" ? (
-      <Heart className="h-3 w-3" />
-    ) : (
-      <Sparkles className="h-3 w-3" />
-    );
+    type === "Bridal" ? <Heart className="h-3 w-3" /> : <Sparkles className="h-3 w-3" />;
 
   const getServiceBadgeClass = (type: ServiceType) =>
     type === "Bridal"
@@ -48,21 +44,22 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
 
-        {/* HEADER */}
-        <div className="flex justify-between items-center">
+        {/* ================= HEADER ================= */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+            <p className="text-sm text-muted-foreground">
               Bridal & Mehandi Finance Overview
             </p>
           </div>
 
           {/* EXPORT BUTTONS */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => exportEventsCSV(events)}
             >
               <Download className="h-4 w-4 mr-2" />
@@ -71,6 +68,7 @@ export default function Dashboard() {
 
             <Button
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => exportExpensesCSV(expenses)}
             >
               <Download className="h-4 w-4 mr-2" />
@@ -79,61 +77,52 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* STATS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard
-            title="Total Income"
-            value={formatCurrency(totalIncome)}
-            icon={TrendingUp}
-            positive
-          />
-          <StatCard
-            title="Total Expenses"
-            value={formatCurrency(totalExpenses)}
-            icon={TrendingDown}
-          />
-          <StatCard
-            title="Net Profit"
-            value={formatCurrency(profit)}
-            icon={Wallet}
-            positive={profit >= 0}
-          />
+        {/* ================= STATS ================= */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StatCard title="Total Income" value={formatCurrency(totalIncome)} icon={TrendingUp} positive />
+          <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} icon={TrendingDown} />
+          <StatCard title="Net Profit" value={formatCurrency(profit)} icon={Wallet} positive={profit >= 0} />
         </div>
 
-        {/* SERVICE SUMMARY */}
-        <div className="grid md:grid-cols-2 gap-4">
+        {/* ================= SERVICE SUMMARY ================= */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <ServiceCard title="Bridal" summary={bridalSummary} />
           <ServiceCard title="Mehandi" summary={mehandiSummary} />
         </div>
 
-        {/* MONTHLY PROFIT CHART */}
+        {/* ================= CHART ================= */}
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Profit Report</CardTitle>
+            <CardTitle className="text-base sm:text-lg">
+              Monthly Profit Report
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <MonthlyProfitChart events={events} expenses={expenses} />
           </CardContent>
         </Card>
 
-        {/* RECENT DATA */}
-        <div className="grid md:grid-cols-2 gap-6">
+        {/* ================= RECENT DATA ================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          {/* RECENT EVENTS */}
+          {/* EVENTS */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex gap-2">
+              <CardTitle className="flex gap-2 text-base">
                 <Calendar /> Recent Events
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
               {recentEvents.map((e) => (
-                <div key={e.id} className="flex justify-between py-2 border-b">
+                <div
+                  key={e.id}
+                  className="flex flex-col sm:flex-row sm:justify-between gap-2 border-b pb-2"
+                >
                   <div>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex flex-wrap gap-2 items-center">
                       <span className="font-medium">{e.clientName}</span>
                       <span
-                        className={`text-xs px-2 rounded-full ${getServiceBadgeClass(
+                        className={`text-xs px-2 py-0.5 rounded-full ${getServiceBadgeClass(
                           e.serviceType
                         )}`}
                       >
@@ -152,21 +141,24 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* RECENT EXPENSES */}
+          {/* EXPENSES */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex gap-2">
+              <CardTitle className="flex gap-2 text-base">
                 <Receipt /> Recent Expenses
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
               {recentExpenses.map((e) => (
-                <div key={e.id} className="flex justify-between py-2 border-b">
+                <div
+                  key={e.id}
+                  className="flex flex-col sm:flex-row sm:justify-between gap-2 border-b pb-2"
+                >
                   <div>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex flex-wrap gap-2 items-center">
                       <span className="font-medium">{e.expenseName}</span>
                       <span
-                        className={`text-xs px-2 rounded-full ${getServiceBadgeClass(
+                        className={`text-xs px-2 py-0.5 rounded-full ${getServiceBadgeClass(
                           e.serviceType
                         )}`}
                       >
@@ -191,21 +183,16 @@ export default function Dashboard() {
   );
 }
 
-/* ---------- SMALL COMPONENTS ---------- */
+/* ================= SMALL COMPONENTS ================= */
 
-function StatCard({
-  title,
-  value,
-  icon: Icon,
-  positive,
-}: any) {
+function StatCard({ title, value, icon: Icon, positive }: any) {
   return (
     <Card>
-      <CardContent className="pt-6 flex justify-between">
+      <CardContent className="pt-6 flex justify-between items-center">
         <div>
           <p className="text-sm text-muted-foreground">{title}</p>
           <p
-            className={`text-2xl font-bold ${
+            className={`text-xl sm:text-2xl font-bold ${
               positive ? "text-success" : "text-destructive"
             }`}
           >
@@ -222,9 +209,9 @@ function ServiceCard({ title, summary }: any) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="text-base sm:text-lg">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-3 gap-4">
+      <CardContent className="grid grid-cols-3 gap-3 text-center sm:text-left">
         <div>
           <p className="text-xs text-muted-foreground">Income</p>
           <p className="font-bold text-success">
