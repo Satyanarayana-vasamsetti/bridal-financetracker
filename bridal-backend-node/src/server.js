@@ -6,6 +6,7 @@ const db = require('./config/db');
 const authRoutes = require('./routes/auth.routes');
 const eventRoutes = require('./routes/event.routes');
 const expenseRoutes = require('./routes/expense.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 const PORT = process.env.PORT || 8081;
@@ -47,6 +48,7 @@ app.get(['/', '/health'], (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 5. 404 Handler
 app.use((req, res) => {
