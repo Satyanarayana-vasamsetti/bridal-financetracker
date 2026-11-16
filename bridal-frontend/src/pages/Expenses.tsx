@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Trash2, Pencil, Download } from "lucide-react";
 import { toast } from "sonner";
+import { SimplePagination } from "@/components/SimplePagination";
 
 /* ================= CSV EXPORT ================= */
 
@@ -112,6 +113,12 @@ export default function Expenses() {
   const [toDate, setToDate] = useState("");
   const [exportType, setExportType] = useState<ServiceType | "All">("All");
 
+  /* ---------- PAGINATION ---------- */
+  const PAGE_SIZE = 10;
+  const [page, setPage] = useState(1);
+  const totalPages = Math.ceil(expenses.length / PAGE_SIZE) || 1;
+  const paginatedExpenses = expenses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -178,7 +185,7 @@ export default function Expenses() {
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
             <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
-            <Select value={exportType} onValueChange={v => setExportType(v as any)}>
+            <Select value={exportType} onValueChange={v => setExportType(v as ServiceType | "All")}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All</SelectItem>
@@ -218,31 +225,54 @@ export default function Expenses() {
 
         {/* LIST */}
         <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold">Expenses List ({expenses.length})</CardTitle>
+              {totalPages > 1 && (
+                <span className="text-xs text-muted-foreground">
+                  Page {page} of {totalPages}
+                </span>
+              )}
+            </div>
+          </CardHeader>
           <CardContent className="space-y-3">
-            {expenses.map(e => (
-              <div
-                key={e.id}
-                className="border rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between gap-3"
-              >
-                <div>
-                  <p className="font-medium">{e.expenseName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDate(e.date)} • {e.serviceType}
-                  </p>
+            {paginatedExpenses.length === 0 ? (
+              <p className="text-center py-6 text-xs text-muted-foreground">No expenses recorded yet.</p>
+            ) : (
+              paginatedExpenses.map(e => (
+                <div
+                  key={e.id}
+                  className="border rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between gap-3 hover:bg-secondary/30 transition"
+                >
+                  <div>
+                    <p className="font-medium">{e.expenseName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(e.date)} • {e.serviceType}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-destructive">
+                      -{formatCurrency(e.amount)}
+                    </span>
+                    <Button size="sm" onClick={() => handleEdit(e)}>
+                      <Pencil size={16} />
+                    </Button>
+                    <Button size="sm" onClick={() => deleteExpense(e.id)}>
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold text-destructive">
-                    -{formatCurrency(e.amount)}
-                  </span>
-                  <Button size="sm" onClick={() => handleEdit(e)}>
-                    <Pencil size={16} />
-                  </Button>
-                  <Button size="sm" onClick={() => deleteExpense(e.id)}>
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
+
+            <SimplePagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              totalItems={expenses.length}
+              pageSize={PAGE_SIZE}
+              itemLabel="expenses"
+            />
           </CardContent>
         </Card>
 

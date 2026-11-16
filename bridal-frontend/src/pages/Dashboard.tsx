@@ -185,7 +185,14 @@ export default function Dashboard() {
 
 /* ================= SMALL COMPONENTS ================= */
 
-function StatCard({ title, value, icon: Icon, positive }: any) {
+interface StatCardProps {
+  title: string;
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+  positive?: boolean;
+}
+
+function StatCard({ title, value, icon: Icon, positive }: StatCardProps) {
   return (
     <Card>
       <CardContent className="pt-6 flex justify-between items-center">
@@ -205,7 +212,12 @@ function StatCard({ title, value, icon: Icon, positive }: any) {
   );
 }
 
-function ServiceCard({ title, summary }: any) {
+interface ServiceCardProps {
+  title: string;
+  summary: { income: number; expenses: number; profit: number };
+}
+
+function ServiceCard({ title, summary }: ServiceCardProps) {
   return (
     <Card>
       <CardHeader>

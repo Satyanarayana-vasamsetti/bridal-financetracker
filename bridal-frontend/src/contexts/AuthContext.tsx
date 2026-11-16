@@ -67,11 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(authUser);
 
       return { error: null };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) && err.response?.data?.message
+        ? err.response.data.message
+        : "Invalid email or password";
       return {
-        error: new Error(
-          err.response?.data?.message || "Invalid email or password"
-        ),
+        error: new Error(errorMsg),
       };
     }
   };
@@ -85,11 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Auto login after signup
       return await signIn(email, password);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) && err.response?.data?.message
+        ? err.response.data.message
+        : "Signup failed";
       return {
-        error: new Error(
-          err.response?.data?.message || "Signup failed"
-        ),
+        error: new Error(errorMsg),
       };
     }
   };
@@ -101,11 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         newPassword,
       });
       return { error: null, message: res.data.message || "Password reset successful" };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) && err.response?.data?.message
+        ? err.response.data.message
+        : "Failed to reset password";
       return {
-        error: new Error(
-          err.response?.data?.message || "Failed to reset password"
-        ),
+        error: new Error(errorMsg),
       };
     }
   };

@@ -2,7 +2,7 @@
 
 type ServiceType = "Bridal" | "Mehandi";
 
-interface ExportOptions<T> {
+interface ExportOptions<T extends { date: string }> {
   data: T[];
   fileName: string;
   fromDate?: string;
@@ -14,7 +14,7 @@ interface ExportOptions<T> {
   headers: string[];
 }
 
-export function exportToCSV<T>({
+export function exportToCSV<T extends { date: string }>({
   data,
   fileName,
   fromDate,
@@ -30,13 +30,13 @@ export function exportToCSV<T>({
   /* 🔹 Date range filter */
   if (fromDate) {
     filtered = filtered.filter(
-      (d: any) => new Date(d.date) >= new Date(fromDate)
+      (d) => new Date(d.date) >= new Date(fromDate)
     );
   }
 
   if (toDate) {
     filtered = filtered.filter(
-      (d: any) => new Date(d.date) <= new Date(toDate)
+      (d) => new Date(d.date) <= new Date(toDate)
     );
   }
 

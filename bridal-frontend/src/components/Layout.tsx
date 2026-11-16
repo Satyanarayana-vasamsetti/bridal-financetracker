@@ -1,7 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useData } from "@/contexts/DataContext";
 import {
   LayoutDashboard,
   Calendar,
@@ -19,20 +18,23 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-const baseNavItems = [
+const customerNavItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/events", label: "Events", icon: Calendar },
   { path: "/expenses", label: "Expenses", icon: Receipt },
 ];
 
+const adminNavItems = [
+  { path: "/admin", label: "Customer Management", icon: Users },
+];
+
 export function Layout({ children }: LayoutProps) {
   const { user, isAdmin, logout } = useAuth();
-  const { customers, selectedCustomerId, setSelectedCustomerId } = useData();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Keep standard nav items
-  const navItems = baseNavItems;
+  // Admin only sees Customer Management; normal users see Dashboard/Events/Expenses
+  const navItems = isAdmin ? adminNavItems : customerNavItems;
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,9 +60,9 @@ export function Layout({ children }: LayoutProps) {
                   Satya<span className="text-primary">Makeovers</span>
                 </h1>
                 {isAdmin && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                    <Shield className="h-3 w-3" />
-                    Admin
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                    <Shield className="h-3.5 w-3.5 text-amber-500" />
+                    Admin Portal
                   </span>
                 )}
               </div>
@@ -85,26 +87,11 @@ export function Layout({ children }: LayoutProps) {
               ))}
             </nav>
 
-            {/* Right: Admin Customer Selector + Logout */}
+            {/* Right: User Email + Logout */}
             <div className="flex items-center gap-3">
-              {isAdmin && (
-                <div className="hidden lg:flex items-center gap-2 text-xs">
-                  <span className="text-muted-foreground font-medium">Viewing:</span>
-                  <select
-                    value={selectedCustomerId}
-                    onChange={(e) => setSelectedCustomerId(e.target.value)}
-                    className="h-8 rounded-md border border-input bg-background px-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring"
-                  >
-                    <option value="my">My Account ({user?.email})</option>
-                    <option value="all">⚡ All Customers Combined</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id.toString()}>
-                        {c.email} ({c.eventsCount} events)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <span className="hidden sm:inline text-xs text-muted-foreground">
+                {user?.email}
+              </span>
 
               {/* Logout */}
               <Button
@@ -124,29 +111,9 @@ export function Layout({ children }: LayoutProps) {
         {mobileMenuOpen && (
           <div className="md:hidden border-t bg-card animate-fade-in">
             <div className="mx-auto max-w-7xl px-4 py-3 space-y-2">
-              {isAdmin && (
-                <div className="pb-2 border-b">
-                  <label className="text-xs text-muted-foreground block mb-1">
-                    Admin Customer Switcher:
-                  </label>
-                  <select
-                    value={selectedCustomerId}
-                    onChange={(e) => {
-                      setSelectedCustomerId(e.target.value);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full h-9 rounded-md border border-input bg-background px-2 text-xs"
-                  >
-                    <option value="my">My Account ({user?.email})</option>
-                    <option value="all">⚡ All Customers Combined</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id.toString()}>
-                        {c.email} ({c.eventsCount} events)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div className="text-xs text-muted-foreground px-4 py-1 border-b">
+                Signed in as: <strong>{user?.email}</strong>
+              </div>
 
               {navItems.map((item) => (
                 <Link

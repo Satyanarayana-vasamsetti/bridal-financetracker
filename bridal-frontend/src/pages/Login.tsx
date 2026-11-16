@@ -10,10 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Sparkles, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Sparkles, Eye, EyeOff, KeyRound, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -214,6 +214,16 @@ export default function Login() {
                     : "No account? Sign up"}
                 </button>
               )}
+            </div>
+
+            <div className="mt-6 pt-3 border-t border-border/60 text-center">
+              <Link
+                to="/admin/login"
+                className="text-xs text-muted-foreground hover:text-primary transition inline-flex items-center gap-1.5"
+              >
+                <Shield className="h-3 w-3" />
+                Go to Admin Portal
+              </Link>
             </div>
           </CardContent>
         </Card>

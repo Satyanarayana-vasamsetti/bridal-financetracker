@@ -16,14 +16,21 @@ router.get('/customers', async (req, res) => {
         u.id, 
         u.email, 
         u.role,
-        COUNT(DISTINCT e.id)::int AS "eventsCount",
-        COALESCE(SUM(DISTINCT e.amount), 0)::float AS "totalIncome",
-        COUNT(DISTINCT x.id)::int AS "expensesCount",
-        COALESCE(SUM(DISTINCT x.amount), 0)::float AS "totalExpenses"
+        COALESCE(ev.events_count, 0)::int AS "eventsCount",
+        COALESCE(ev.total_income, 0)::float AS "totalIncome",
+        COALESCE(ex.expenses_count, 0)::int AS "expensesCount",
+        COALESCE(ex.total_expenses, 0)::float AS "totalExpenses"
       FROM users u
-      LEFT JOIN bridal_event e ON e.user_id = u.id
-      LEFT JOIN expense x ON x.user_id = u.id
-      GROUP BY u.id, u.email, u.role
+      LEFT JOIN (
+        SELECT user_id, COUNT(*)::int AS events_count, SUM(amount)::float AS total_income
+        FROM bridal_event
+        GROUP BY user_id
+      ) ev ON ev.user_id = u.id
+      LEFT JOIN (
+        SELECT user_id, COUNT(*)::int AS expenses_count, SUM(amount)::float AS total_expenses
+        FROM expense
+        GROUP BY user_id
+      ) ex ON ex.user_id = u.id
       ORDER BY u.id ASC
     `);
 
@@ -37,6 +44,41 @@ router.get('/customers', async (req, res) => {
   } catch (err) {
     console.error('Error fetching customers:', err);
     res.status(500).json({ message: 'Failed to fetch customers: ' + err.message });
+  }
+});
+
+// POST /api/admin/customers - Admin creates a new customer account
+router.post('/customers', async (req, res) => {
+  try {
+    const { email, password, role = 'user' } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const existing = await db.query('SELECT id FROM users WHERE LOWER(email) = $1', [cleanEmail]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const { rows } = await db.query(
+      'INSERT INTO users (email, password, role) VALUES ($1, $2, $3) RETURNING id, email, role',
+      [cleanEmail, hashedPassword, role]
+    );
+
+    res.status(201).json({ 
+      message: `Customer ${cleanEmail} created successfully.`, 
+      user: rows[0] 
+    });
+  } catch (err) {
+    console.error('Admin create customer error:', err);
+    res.status(500).json({ message: 'Failed to create customer: ' + err.message });
   }
 });
 

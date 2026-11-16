@@ -16,6 +16,8 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
 
 import Login from "./pages/Login";
+import AdminLogin from "./pages/AdminLogin";
+import Customers from "./pages/Customers";
 import Dashboard from "./pages/Dashboard";
 import Events from "./pages/Events";
 import Expenses from "./pages/Expenses";
@@ -25,7 +27,7 @@ const queryClient = new QueryClient();
 
 /* ---------- PROTECTED ROUTE ---------- */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin } = useAuth();
 
   if (isLoading) {
     return (
@@ -41,12 +43,38 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
+  // Admin is strictly for customer management - redirect to /admin
+  if (isAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+/* ---------- ADMIN ROUTE ---------- */
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, isAdmin } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isAdmin) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
   return <>{children}</>;
 }
 
 /* ---------- ROUTES ---------- */
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
 
   return (
     <Routes>
@@ -55,6 +83,27 @@ function AppRoutes() {
         element={
           isAuthenticated ? <Navigate to="/" replace /> : <Login />
         }
+      />
+
+      <Route
+        path="/admin/login"
+        element={
+          isAuthenticated && isAdmin ? <Navigate to="/admin" replace /> : <AdminLogin />
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <Customers />
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/customers"
+        element={<Navigate to="/admin" replace />}
       />
 
       <Route
